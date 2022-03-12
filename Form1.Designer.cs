@@ -29,10 +29,6 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.TreeNode treeNode1 = new System.Windows.Forms.TreeNode("Узел0");
-            System.Windows.Forms.TreeNode treeNode2 = new System.Windows.Forms.TreeNode("Узел2");
-            System.Windows.Forms.TreeNode treeNode3 = new System.Windows.Forms.TreeNode("Узел1", new System.Windows.Forms.TreeNode[] {
-            treeNode2});
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.object_picker = new System.Windows.Forms.ToolStripMenuItem();
             this.кругToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
@@ -42,7 +38,6 @@
             this.size_changer = new System.Windows.Forms.NumericUpDown();
             this.colorDialog = new System.Windows.Forms.ColorDialog();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.treeView1 = new System.Windows.Forms.TreeView();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.size_changer)).BeginInit();
             this.SuspendLayout();
@@ -122,28 +117,11 @@
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
             // 
-            // treeView1
-            // 
-            this.treeView1.Location = new System.Drawing.Point(909, 27);
-            this.treeView1.Name = "treeView1";
-            treeNode1.Name = "Узел0";
-            treeNode1.Text = "Узел0";
-            treeNode2.Name = "Узел2";
-            treeNode2.Text = "Узел2";
-            treeNode3.Name = "Узел1";
-            treeNode3.Text = "Узел1";
-            this.treeView1.Nodes.AddRange(new System.Windows.Forms.TreeNode[] {
-            treeNode1,
-            treeNode3});
-            this.treeView1.Size = new System.Drawing.Size(155, 561);
-            this.treeView1.TabIndex = 3;
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1064, 681);
-            this.Controls.Add(this.treeView1);
             this.Controls.Add(this.size_changer);
             this.Controls.Add(this.menuStrip1);
             this.Name = "Form1";
@@ -168,7 +146,6 @@
         private System.Windows.Forms.ToolStripMenuItem color_picker;
         private System.Windows.Forms.ColorDialog colorDialog;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
-        private System.Windows.Forms.TreeView treeView1;
     }
 }
 
