@@ -55,6 +55,7 @@ namespace laba_7
             public virtual void set_size(int size) { }
             public virtual bool select() { return true; }
             public virtual bool select(bool select) { return true; }
+            public virtual System.Windows.Forms.Button inside() { return null;}
             public GroupBase() { in_group = false; }
             public GroupBase(bool eq) { in_group = eq; }
         }
@@ -299,9 +300,9 @@ namespace laba_7
         {
 //            int count;
             public int group_count;
-            public List<Object> massive;
+            public List<GroupBase> massive;
             public int size() { return massive.Count; }
-            public void add(Object obj)
+            public void add(GroupBase obj)
             {
                 massive.Add(obj);
             }
@@ -319,21 +320,21 @@ namespace laba_7
             //}
             public void select_clear()
             {
-                foreach (Object obj in massive)
+                foreach (GroupBase obj in massive)
                 {
                     obj.select(false);
                 }    
             }
             public void recolor_selected(Color color)
             {
-                foreach (Object obj in massive)
+                foreach (GroupBase obj in massive)
                 {
                     if (obj.select()) { obj.set_color(color); }
                 }
             }
             public void move_selected(int x, int y)
             {
-                foreach (Object obj in massive)
+                foreach (GroupBase obj in massive)
                 {
                     if (obj.select()) { obj.add(x, y); }
                 }
@@ -355,11 +356,15 @@ namespace laba_7
                 }
                 return k;
             }
-            public Object get(int i)
+            public GroupBase get(int i)
             {
                 if (i >= 0 && i < size()) { 
                     return massive[i];
                 }
+                return null;
+            }
+            //доделать функцию на проверку наличия sender в хранилище
+            public Object check_obj(Object obj) {
                 return null;
             }
             public Storage()
@@ -441,7 +446,7 @@ namespace laba_7
         }
         public void select_obj(object sender, MouseEventArgs e)
         {
-            Object obj = null;
+            GroupBase obj = null;
             int k = 0;
             int size = storage.size();
             while (k < size)
