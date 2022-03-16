@@ -43,6 +43,8 @@ namespace laba_7
             bool select();
             //System.Windows.Forms.Button inside();
         }
+
+        //классы для группировки
         public abstract class GroupBase : IObject
         {
             public bool in_group;
@@ -55,7 +57,9 @@ namespace laba_7
             public virtual void set_size(int size) { }
             public virtual bool select() { return true; }
             public virtual bool select(bool select) { return true; }
-            public virtual System.Windows.Forms.Button inside() { return null;}
+            public virtual GroupBase check_obj(object obj) { return null; }
+            public virtual System.Windows.Forms.Button inside() { return null; }
+            public virtual System.Windows.Forms.Button inside(object obj) { return null; }
             public GroupBase() { in_group = false; }
             public GroupBase(bool eq) { in_group = eq; }
         }
@@ -66,8 +70,8 @@ namespace laba_7
             private bool _select;
             private int count;
             public int get_size() { return size; }
-            public int get_count() { return count; }
-            public void set_count(int c) { count = c; }
+            public override int get_count() { return count; }
+            public override void set_count(int c) { count = c; }
             public void add(GroupBase el)
             {
               for (int i = 0; i < size; i++)
@@ -88,7 +92,7 @@ namespace laba_7
                 count = 0;
                 elements = new GroupBase[n];
             }
-            virtual public bool obj_in_group(System.Windows.Forms.Button btn) {
+            override public bool obj_in_group(System.Windows.Forms.Button btn) {
                 int i = 0;bool eq = false;
                 while (i < size && !eq) {
                     eq = elements[i].obj_in_group(btn);
@@ -103,7 +107,7 @@ namespace laba_7
                 }
                 return false;
             }
-            virtual public void set(int x, int y) {
+            override public void set(int x, int y) {
                 for(int i = 0; i < size; i++)
                 {
                     if(elements[i] != null)
@@ -112,7 +116,7 @@ namespace laba_7
                     }
                 }
             }
-            virtual public void add(int x, int y)
+            override public void add(int x, int y)
             {
                 for (int i = 0; i < size; i++)
                 {
@@ -122,7 +126,7 @@ namespace laba_7
                     }
                 }
             }
-            virtual public void set_color(Color color)
+            override public void set_color(Color color)
             {
                 for (int i = 0; i < size; i++)
                 {
@@ -132,7 +136,7 @@ namespace laba_7
                     }
                 }
             }
-            virtual public void set_size(int size)
+            override public void set_size(int size)
             {
                 for (int i = 0; i < this.size; i++)
                 {
@@ -142,9 +146,10 @@ namespace laba_7
                     }
                 }
             }
-            public bool select(){ return _select;}
-            virtual public bool select(bool select)
+            public override bool select(){ return _select;}
+            override public bool select(bool select)
             {
+                _select = select;
                 for (int i = 0; i < size; i++)
                 {
                     if (elements[i] != null)
@@ -154,25 +159,122 @@ namespace laba_7
                 }
                 return select;
             }
+            public override GroupBase check_obj(object o) {
+                GroupBase obj = null;
+                for(int i = 0; i < size; i++)
+                {
+                    obj = elements[i].check_obj(o);
+                    if(obj != null) { return this; }
+                }
+                return null;
+            }
+            public override System.Windows.Forms.Button inside(object obj)
+            {
+                for(int i = 0; i < size; i++)
+                {
+                    if (elements[i] == obj) { return elements[i].inside(); }
+                }
+                return null;
+            }
         }
+
+        //классы команд
         public abstract class Command
         {
-            public abstract void execute();
-            public abstract void unexecute();
+            public virtual void execute() { }
+            public virtual void unexecute() { }
+            public virtual void execute(GroupBase o) { }
+            public virtual void unexecute(GroupBase o) { }
+            public virtual void execute(List<GroupBase> o) { }
+            public virtual void unexecute(List<GroupBase> o) { }
             public virtual Command clone() { return null; }
         }
-        public class MoveCommand
+        public class CommandLog
         {
-            private int dx, dy;
-            public void execute(GroupBase o) { o.add(dx, dy); }
-            public void unexecute(GroupBase o) { o.add(-dx, -dy); }
-            public MoveCommand(int dx,int dy) { this.dx = dx; this.dy = dy; }
-            public MoveCommand clone() { return new MoveCommand(dx,dy); }
+            List<Command> commands = new List<Command>();
+            public CommandLog() { }
+            public CommandLog(List<Command> commands) { this.commands = commands; }
+            public void add(Command command) { commands.Add(command); }
+            public void add(List<Command> command) { this.commands = commands.Concat(command).ToList(); }
         }
+        public class MoveCommand : Command
+        {
+            private int dx, dy, speed;
+            private GroupBase o;
+            public override void execute(GroupBase o) { this.o = o; o.add(dx * speed, dy * speed); }
+            public override void unexecute(GroupBase o) { this.o = o; o.add(-dx * speed, -dy * speed); }
+            public override void execute() { o.add(dx * speed, dy * speed); }
+            public override void unexecute() { o.add(-dx * speed, -dy * speed); }
+            public MoveCommand(GroupBase o, int dx, int dy) { this.o = o; this.dx = dx; this.dy = dy; this.speed = 1; }
+            public MoveCommand(GroupBase o, int dx, int dy, int speed) { this.o = o; this.dx = dx; this.dy = dy; this.speed = speed; }
+            public MoveCommand(int dx, int dy) { this.o = null; this.dx = dx; this.dy = dy; this.speed = 1; }
+            public MoveCommand(int dx, int dy, int speed) { this.o = null; this.dx = dx; this.dy = dy; this.speed = speed; }
+            public override Command clone() { return new MoveCommand(o, dx, dy,speed); }
+        }
+        public class MoveSelectedCommand : Command
+        {
+            private int dx, dy, speed;
+            List<GroupBase> objects;
+            private void set_p(List<GroupBase> objects,int dx,int dy,int speed) { this.objects = objects;this.dx = dx;this.dy = dy;this.speed = speed; }
+            public override void execute() { foreach (var o in objects) { o.add(dx * speed, dy * speed); } }
+            public override void unexecute() { foreach (var o in objects) { o.add(-dx * speed, -dy * speed); } }
+            public override void execute(List<GroupBase> objects) { this.objects = objects; foreach (var o in objects) { o.add(dx * speed, dy * speed); } }
+            public override void unexecute(List<GroupBase> objects) { this.objects = objects; foreach (var o in objects) { o.add(-dx * speed, -dy * speed); } }
+            public MoveSelectedCommand(List<GroupBase> objects, int dx, int dy) { set_p(objects, dx, dy, 1); }
+            public MoveSelectedCommand(List<GroupBase> objects, int dx, int dy, int speed) { set_p(objects, dx, dy, speed); }
+            public MoveSelectedCommand(int dx, int dy) { set_p(new List<GroupBase>(),dx, dy, 1); }
+            public MoveSelectedCommand(int dx, int dy, int speed) { set_p(new List<GroupBase>(), dx, dy, speed); }
+            public override Command clone() { return new MoveSelectedCommand(objects,dx, dy,speed); }
+        }
+        public class MoveCommandMap
+        {
+            private Dictionary<Keys, MoveCommand> move_map;
+            private Dictionary<Keys, MoveSelectedCommand> move_selected_map;
+            private void fill_the_maps(int speed)
+            {
+                move_map = new Dictionary<Keys, MoveCommand>();
+                move_map.Add(Keys.W, new MoveCommand(0, -1, speed));
+                move_map.Add(Keys.A, new MoveCommand(-1, 0, speed));
+                move_map.Add(Keys.S, new MoveCommand(0, 1, speed));
+                move_map.Add(Keys.D, new MoveCommand(1, 0, speed));
+
+                move_selected_map = new Dictionary<Keys, MoveSelectedCommand>();
+                move_selected_map.Add(Keys.W, new MoveSelectedCommand(0, -1, speed));
+                move_selected_map.Add(Keys.A, new MoveSelectedCommand(-1, 0, speed));
+                move_selected_map.Add(Keys.S, new MoveSelectedCommand(0, 1, speed));
+                move_selected_map.Add(Keys.D, new MoveSelectedCommand(1, 0, speed));
+
+
+            }
+            public MoveCommandMap()
+            {
+                fill_the_maps(1);
+            }
+            public MoveCommandMap(int speed)
+            {
+                fill_the_maps(speed);
+            }
+            public Command move(GroupBase o, KeyEventArgs key) { if (o == null) { return null; } MoveCommand kyda; if (move_map.TryGetValue(key.KeyCode, out kyda)) { kyda.execute(o); return kyda; } return null; }
+            public Command move(List<GroupBase> o, KeyEventArgs key) { if (o == null) { return null; } MoveSelectedCommand kyda; if (move_selected_map.TryGetValue(key.KeyCode, out kyda)) { kyda.execute(o); return kyda; } return null; }
+            //public List<Command> move(Storage storage, KeyEventArgs key) {
+            //    List<Command> commands = new List<Command>();
+            //    for (int i = 0; i < storage.size(); i++) {
+
+            //        Command command = new MoveCommandMap().move(storage.get(i),key);
+            //        commands.Add(command);
+            //            }
+            //    return commands;
+            //}
+        }
+        //идеи для команд
+        public class SelectCommand { }
         public class AddCommand
         {
 
         }
+
+
+        //Объекты
         public class Object : GroupBase
         {
             private void set_p(int x, int y, int size, Color color)
@@ -190,7 +292,7 @@ namespace laba_7
             protected Color _color;
             public bool _selected;
             public System.Windows.Forms.Button obj = new System.Windows.Forms.Button();
-            public void set(int x, int y)
+            public override void set(int x, int y)
             {
                 int p = _size / 2;
                 if (x > p && x <= 1080 - p -22 && y > p + 22 && y <= 720 -40 - p)
@@ -199,16 +301,16 @@ namespace laba_7
                     obj.Location = new System.Drawing.Point(x - p, y - p);
                 }
             }
-            public void add(int x, int y)
+            public override void add(int x, int y)
             {
                 this.set(_x + x, _y + y);
             }
-            public void set_color(Color color)
+            public override void set_color(Color color)
             {
                 _color = color;
                 obj.BackColor = _color;
             }
-            public void set_size(int size) { _ = size > 0 ? _size = size : size; }
+            public override void set_size(int size) { _ = size > 0 ? _size = size : size; }
             public Object()
             {
                 set_p(10, 10, 60, System.Drawing.Color.Green);
@@ -227,7 +329,12 @@ namespace laba_7
             {
                 set_p(x, y, size, color);
             }
-            virtual public System.Windows.Forms.Button inside()
+            public override GroupBase check_obj(object o)
+            {
+                if(this.obj == o) { return this; }
+                return null;
+            }
+            public override System.Windows.Forms.Button inside()
             {
                 return obj;
             }
@@ -235,11 +342,11 @@ namespace laba_7
             {
                 return btn.Name == this.obj.Name;
             }
-            public bool select()
+            public override bool select()
             {
                 return _selected;
             }
-            public bool select(bool _select)
+            public override bool select(bool _select)
             {
                 if (_select)
                 {
@@ -302,22 +409,21 @@ namespace laba_7
             public int group_count;
             public List<GroupBase> massive;
             public int size() { return massive.Count; }
+            public List<GroupBase> get_selected()
+            {
+                List<GroupBase> selected_objects = new List<GroupBase>();
+                for (int i = 0; i < size(); i++)
+                {
+                    if (massive[i].select()) { selected_objects.Add(massive[i]); }
+                }
+                return selected_objects;
+            }
             public void add(GroupBase obj)
             {
                 massive.Add(obj);
+                this.select_clear();
+                massive.Last().select(true);
             }
-            //public void add(Group obj)
-            //{
-            //    int i = 0;
-            //    while (i < _size && massive[i] != null)
-            //    {
-            //        i++;
-            //    }
-            //    if (i != _size)
-            //    {
-            //        massive[i] = obj;
-            //    }
-            //}
             public void select_clear()
             {
                 foreach (GroupBase obj in massive)
@@ -364,12 +470,18 @@ namespace laba_7
                 return null;
             }
             //доделать функцию на проверку наличия sender в хранилище
-            public Object check_obj(Object obj) {
+            public GroupBase check_obj(object o) {
+                GroupBase obj;
+                for(int i = 0; i < size(); i++)
+                {
+                    obj = massive[i].check_obj(o);
+                    if (obj != null) { return obj; }
+                }
                 return null;
             }
             public Storage()
             {
-                massive = new List<Object> ();
+                massive = new List<GroupBase> ();
                 group_count = 0;
             }
             //дописать метод для группировки
@@ -387,6 +499,7 @@ namespace laba_7
         Storage storage = new Storage();
         Group grouplist = new Group();
         Settings obj_settings = new Settings();
+        MoveCommandMap movemap = new MoveCommandMap(4);
         public Form1()
         {
             InitializeComponent();
@@ -447,16 +560,10 @@ namespace laba_7
         public void select_obj(object sender, MouseEventArgs e)
         {
             GroupBase obj = null;
+            
             int k = 0;
             int size = storage.size();
-            while (k < size)
-            {
-                if (storage.get(k) != null && sender == storage.get(k).inside())
-                {
-                    obj = storage.get(k);
-                }
-                k++;
-            }
+            obj = storage.check_obj(sender);
             if (Control.ModifierKeys == Keys.Control)
             {
                 obj.select(!obj.select());
@@ -472,7 +579,7 @@ namespace laba_7
             if (e.KeyCode == Keys.Delete)
             {
                 {
-                    Object circle = null;
+                    GroupBase circle = null;
                     int k = 0;
                     int size = storage.size();
                     while (k < size)
@@ -492,22 +599,10 @@ namespace laba_7
         }
         public void move_obj(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.W)
-            {
-                storage.move_selected(0, -1);
-            }
-            if (e.KeyCode == Keys.A)
-            {
-                storage.move_selected(-1, 0);
-            }
-            if (e.KeyCode == Keys.S)
-            {
-                storage.move_selected(0, 1);
-            }
-            if (e.KeyCode == Keys.D)
-            {
-                storage.move_selected(1, 0);
-            }
+            List<GroupBase> o = storage.get_selected();
+            //o = storage.check_obj(sender);
+            movemap.move(o, e);
+
         }
         private void create_group(object sender,KeyEventArgs e)
         {
@@ -522,7 +617,7 @@ namespace laba_7
                 Group g = new Group(s);
                 for (int i = 0; i < storage.size(); i++)
                 {
-                    Object obj = storage.get(i);
+                    GroupBase obj = storage.get(i);
                     if (obj.select()) { obj.in_group = true; g.add(obj); }
                 }
                 grouplist.add(g);
@@ -532,7 +627,7 @@ namespace laba_7
         {
             int size = storage.size();
             int k = 0;
-            Object circle = null;
+            GroupBase circle = null;
             Controls.Clear();
             while (k < size)
             {
