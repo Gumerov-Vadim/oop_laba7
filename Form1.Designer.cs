@@ -113,6 +113,7 @@
             this.разгруппироватьToolStripMenuItem.Name = "разгруппироватьToolStripMenuItem";
             this.разгруппироватьToolStripMenuItem.Size = new System.Drawing.Size(120, 20);
             this.разгруппироватьToolStripMenuItem.Text = "Разгруппировать";
+            this.разгруппироватьToolStripMenuItem.Click += new System.EventHandler(this.разгруппироватьToolStripMenuItem_Click);
             // 
             // size_changer
             // 

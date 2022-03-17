@@ -61,6 +61,7 @@ namespace laba_7
             public virtual GroupBase check_obj(object obj) { return null; }
             public virtual System.Windows.Forms.Button inside() { return null; }
             public virtual System.Windows.Forms.Button inside(object obj) { return null; }
+            public abstract List<GroupBase> ungroup();
             public GroupBase() { in_group = false; }
             public GroupBase(bool eq) { in_group = eq; }
         }
@@ -193,6 +194,15 @@ namespace laba_7
                     controls = controls.Concat(elements[i].get_controls()).ToList();
                 }
                 return controls; }
+            public override List<GroupBase> ungroup()
+            {
+                List<GroupBase> elements = new List<GroupBase>();
+                for(int i = 0;i < size; i++)
+                {
+                    elements.Add(this.elements[i]);
+                }
+                return elements;
+            }
             public override System.Windows.Forms.Button inside(object obj)
             {
                 for(int i = 0; i < size; i++)
@@ -391,6 +401,12 @@ namespace laba_7
                 controls.Add(obj);
                 return controls;
             }
+            public override List<GroupBase> ungroup()
+            {
+                List<GroupBase> elem = new List<GroupBase>();
+                elem.Add(this);
+                return elem;
+            }
         }
         public class Circle : Object
         {
@@ -520,7 +536,6 @@ namespace laba_7
                 return null;
             }
 
-            //дописать метод для группировки
             public GroupBase group()
             {
                 List<GroupBase> selected = get_selected();
@@ -541,7 +556,29 @@ namespace laba_7
                 //GroupBase group = new Group(selected_count);
                 //return group;
             }
-            public Storage()
+            public List<GroupBase> ungroup()
+            {
+                List<GroupBase> selected = get_selected();
+                List<GroupBase> ungrouped = new List<GroupBase>();
+                while (selected.Count!=0) { 
+                    ungrouped = ungrouped.Concat(selected.First().ungroup()).ToList();
+                    massive.Remove(selected.First());
+                    selected.Remove(selected.First());
+                }
+                massive = massive.Concat(ungrouped).ToList();
+
+                return ungrouped;
+                //foreach (GroupBase obj in selected)
+                //{
+                //    obj.in_group = true;
+                //}
+
+                //GroupBase group = new Group(selected);
+                //del_selected();
+                //massive.Add(group);
+                //return group;
+            }
+                public Storage()
             {
                 massive = new List<GroupBase>();
             }
@@ -734,6 +771,11 @@ namespace laba_7
         private void сгруппироватьToolStripMenuItem_Click(object sender, EventArgs e)
         {
             storage.group();
+        }
+
+        private void разгруппироватьToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            storage.ungroup();
         }
     }
 }
