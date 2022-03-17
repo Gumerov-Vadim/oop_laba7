@@ -49,7 +49,8 @@ namespace laba_7
         {
             public bool in_group;
             public virtual bool obj_in_group(System.Windows.Forms.Button btn) { return false; }
-            public virtual int get_count() { return 0; }
+            public virtual int get_count() { return 1; }
+            public abstract List<Control> get_controls();
             public virtual void set_count(int c) { }
             public virtual void set(int x, int y) { }
             public virtual void add(int x, int y) { }
@@ -118,6 +119,12 @@ namespace laba_7
                 }
                 return false;
             }
+            public override int get_count()
+            {
+                int c = 0;
+                foreach(Group el in elements) { c = c + el.get_count(); }
+                return c;
+            }
             override public void set(int x, int y) {
                 for(int i = 0; i < size; i++)
                 {
@@ -179,6 +186,13 @@ namespace laba_7
                 }
                 return null;
             }
+            public override List<Control> get_controls() { 
+                List<Control> controls = new List<Control>();
+                for(int i = 0; i < size; i++)
+                {
+                    controls = controls.Concat(elements[i].get_controls()).ToList();
+                }
+                return controls; }
             public override System.Windows.Forms.Button inside(object obj)
             {
                 for(int i = 0; i < size; i++)
@@ -349,10 +363,10 @@ namespace laba_7
             {
                 return obj;
             }
-            public override bool obj_in_group(System.Windows.Forms.Button btn)
-            {
-                return btn.Name == this.obj.Name;
-            }
+            //public override bool obj_in_group(System.Windows.Forms.Button btn)
+            //{
+            //    return btn.Name == this.obj.Name;
+            //}
             public override bool select()
             {
                 return _selected;
@@ -371,6 +385,11 @@ namespace laba_7
                     obj.BackColor = this._color;
                     return false;
                 }
+            }
+            public override List<Control> get_controls() {
+                List<Control> controls = new List<Control>();
+                controls.Add(obj);
+                return controls;
             }
         }
         public class Circle : Object
@@ -417,9 +436,18 @@ namespace laba_7
         public class Storage
         {
 //            int count;
-            public int group_count;
+            //public int group_count;
             public List<GroupBase> massive;
             public int size() { return massive.Count; }
+            public int count()
+            {
+                int c = 0;
+                foreach(GroupBase obj in massive)
+                {
+                    c = c + obj.get_count();
+                }
+                return c;
+            }
             public List<GroupBase> get_selected()
             {
                 List<GroupBase> selected_objects = new List<GroupBase>();
@@ -456,14 +484,15 @@ namespace laba_7
                     if (obj.select()) { obj.add(x, y); }
                 }
             }
-            public int del_selected()
+            public List<Control> del_selected()
             {
+                List<Control> deleted = new List<Control>();
                 int i = 0;
-                int k = 0;
                 while (i < massive.Count)
                 {
                     if (massive[i].select())
                     {
+                        deleted = deleted.Concat(massive[i].get_controls()).ToList();
                         massive.RemoveAt(i);
                     }
                     else
@@ -471,7 +500,7 @@ namespace laba_7
                         i++;
                     }
                 }
-                return k;
+                return deleted;
             }
             public GroupBase get(int i)
             {
@@ -490,11 +519,7 @@ namespace laba_7
                 }
                 return null;
             }
-            public Storage()
-            {
-                massive = new List<GroupBase> ();
-                group_count = 0;
-            }
+
             //дописать метод для группировки
             public GroupBase group()
             {
@@ -515,6 +540,10 @@ namespace laba_7
                 //}
                 //GroupBase group = new Group(selected_count);
                 //return group;
+            }
+            public Storage()
+            {
+                massive = new List<GroupBase>();
             }
         }
         Storage storage = new Storage();
@@ -597,21 +626,11 @@ namespace laba_7
         {
             if (e.KeyCode == Keys.Delete)
             {
-                
-                    //GroupBase circle = null;
-                    //int k = 0;
-                    //int size = storage.size();
-                    //while (k < size)
-                    //{
-                    //    circle = storage.get(k);
-                    //    if (circle != null && circle.select())
-                    //    {
-                    //        Controls.Remove(circle.inside());
-                    //    }
-                    //    k++;
-                    //}
-            
-                storage.del_selected();
+                List<Control> deleted = storage.del_selected();
+                foreach (Control obj in deleted)
+                {
+                    Controls.Remove(obj);
+                }
                 
             }
         }
@@ -652,6 +671,7 @@ namespace laba_7
             int k = 0;
             GroupBase circle = null;
             Controls.Clear();
+            InitializeComponent();
             while (k < size)
             {
                 circle = storage.get(k);
