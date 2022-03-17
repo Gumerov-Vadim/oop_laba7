@@ -68,29 +68,40 @@ namespace laba_7
             public GroupBase[] elements;
             private int size;
             private bool _select;
-            private int count;
+            //private int count;
             public int get_size() { return size; }
-            public override int get_count() { return count; }
-            public override void set_count(int c) { count = c; }
-            public void add(GroupBase el)
-            {
-              for (int i = 0; i < size; i++)
-                {
-                    if (elements[i] == null) { elements[i] = el; elements[i].set_count(elements[i].get_count() + 1); }
-                    this.count++;
-                }
-            }
+            //public override int get_count() { return count; }
+            //public override void set_count(int c) { count = c; }
+            //public void add(GroupBase el)
+            //{
+            //  for (int i = 0; i < size; i++)
+            //    {
+            //        if (elements[i] == null) { elements[i] = el; elements[i].set_count(elements[i].get_count() + 1); }
+            //        this.count++;
+            //    }
+            //}
             public Group()
             {
                 size = 100;
-                count = 0;
+                //count = 0;
                 elements = new GroupBase[100];
             }
             public Group(int n)
             {
                 size = n;
-                count = 0;
+                //count = 0;
                 elements = new GroupBase[n];
+            }
+            public Group(List<GroupBase> objects) { 
+                int objects_count = objects.Count();
+                elements = new GroupBase[objects_count];
+                for (int i=0; i < objects_count; i++)
+                {
+                    elements[i] = objects[i];
+                }
+                size = objects_count;
+                _select = true;
+
             }
             override public bool obj_in_group(System.Windows.Forms.Button btn) {
                 int i = 0;bool eq = false;
@@ -487,13 +498,23 @@ namespace laba_7
             //дописать метод для группировки
             public GroupBase group()
             {
-                int selected_count = 0;
-                for (int i = 0; i < size(); i++)
-                {
-                    if (massive[i].select()) { selected_count++; }
+                List<GroupBase> selected = get_selected();
+                foreach (GroupBase obj in selected) {
+                obj.in_group = true;
                 }
-                GroupBase group = new Group(selected_count);
+
+                GroupBase group = new Group(selected);
+                del_selected();
+                massive.Add(group);
                 return group;
+
+                //int selected_count = 0;
+                //for (int i = 0; i < size(); i++)
+                //{
+                //    if (massive[i].select()) { selected_count++; }
+                //}
+                //GroupBase group = new Group(selected_count);
+                //return group;
             }
         }
         Storage storage = new Storage();
@@ -561,8 +582,6 @@ namespace laba_7
         {
             GroupBase obj = null;
             
-            int k = 0;
-            int size = storage.size();
             obj = storage.check_obj(sender);
             if (Control.ModifierKeys == Keys.Control)
             {
@@ -578,23 +597,22 @@ namespace laba_7
         {
             if (e.KeyCode == Keys.Delete)
             {
-                {
-                    GroupBase circle = null;
-                    int k = 0;
-                    int size = storage.size();
-                    while (k < size)
-                    {
-                        circle = storage.get(k);
-                        if (circle != null && circle.select())
-                        {
-                            Controls.Remove(circle.inside());
-                        }
-                        k++;
-                    }
-                    storage.del_selected();
-                    //                i = i - storage.del_selected();
-                    //                label1.Text = i.ToString();
-                }
+                
+                    //GroupBase circle = null;
+                    //int k = 0;
+                    //int size = storage.size();
+                    //while (k < size)
+                    //{
+                    //    circle = storage.get(k);
+                    //    if (circle != null && circle.select())
+                    //    {
+                    //        Controls.Remove(circle.inside());
+                    //    }
+                    //    k++;
+                    //}
+            
+                storage.del_selected();
+                
             }
         }
         public void move_obj(object sender, KeyEventArgs e)
@@ -606,22 +624,27 @@ namespace laba_7
         }
         private void create_group(object sender,KeyEventArgs e)
         {
-            if (storage.group_count!=0)
+            //if (storage.group_count!=0)
+            //{
+
+            //    int s = 0;
+            //    for (int i = 0; i < storage.size(); i++)
+            //    {
+            //        if (storage.get(i).select()) { s++; }
+            //    }
+            //    Group g = new Group(s);
+            //    for (int i = 0; i < storage.size(); i++)
+            //    {
+            //        GroupBase obj = storage.get(i);
+            //        if (obj.select()) { obj.in_group = true; g.add(obj); }
+            //    }
+            //    grouplist.add(g);
+            //}
+            if (e.KeyCode == Keys.M)
             {
-                
-                int s = 0;
-                for (int i = 0; i < storage.size(); i++)
-                {
-                    if (storage.get(i).select()) { s++; }
-                }
-                Group g = new Group(s);
-                for (int i = 0; i < storage.size(); i++)
-                {
-                    GroupBase obj = storage.get(i);
-                    if (obj.select()) { obj.in_group = true; g.add(obj); }
-                }
-                grouplist.add(g);
+                storage.group();
             }
+            
         }
         private void paint(object sender, EventArgs e)
         {
@@ -681,6 +704,16 @@ namespace laba_7
         }
         private void add_tree_view(object sender, EventArgs e)
         {
+        }
+
+        private void Form1_Load_1(object sender, EventArgs e)
+        {
+
+        }
+
+        private void сгруппироватьToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            storage.group();
         }
     }
 }
