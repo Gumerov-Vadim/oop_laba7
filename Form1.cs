@@ -36,11 +36,15 @@ namespace laba_7
         interface IObject
         {
           //  void set_p(int x, int y, int size, Color color);
-            void set(int x, int y);
-            void add(int x, int y);
+            bool set(int x, int y);
+            bool add(int x, int y);
             void set_color(Color color);
             void set_size(int size);
             bool select();
+            int get_x();
+            int get_y();
+            int get_width();
+            int get_height();
             //System.Windows.Forms.Button inside();
         }
 
@@ -52,8 +56,8 @@ namespace laba_7
             public virtual int get_count() { return 1; }
             public abstract List<Control> get_controls();
             public virtual void set_count(int c) { }
-            public virtual void set(int x, int y) { }
-            public virtual void add(int x, int y) { }
+            public virtual bool set(int x, int y) { return false; }
+            public virtual bool add(int x, int y) { return false; }
             public virtual void set_color(Color color) { }
             public virtual void set_size(int size) { }
             public virtual bool select() { return true; }
@@ -64,11 +68,18 @@ namespace laba_7
             public abstract List<GroupBase> ungroup();
             public GroupBase() { in_group = false; }
             public GroupBase(bool eq) { in_group = eq; }
+
+            public abstract int get_x();
+            public abstract int get_y();
+            public abstract int get_width();
+            public abstract int get_height();
         }
         public class Group : GroupBase
         {
             public GroupBase[] elements;
             private int size;
+            private int width, height;
+            private int x, y;
             private bool _select;
             //private int count;
             public int get_size() { return size; }
@@ -94,12 +105,90 @@ namespace laba_7
                 //count = 0;
                 elements = new GroupBase[n];
             }
-            public Group(List<GroupBase> objects) { 
+            public Group(List<GroupBase> objects) {
                 int objects_count = objects.Count();
                 elements = new GroupBase[objects_count];
-                for (int i=0; i < objects_count; i++)
+                if(objects_count > 0)
                 {
-                    elements[i] = objects[i];
+                    //int minx, miny, maxx, maxy;
+                    //int width_l, width_r, height_t, height_b;
+                    int lb, rb, tb, bb;
+
+                    GroupBase first_obj = objects.First();
+                    //minx = maxx = first_obj.get_x();
+                    //miny = maxy = first_obj.get_y();
+                    //width_l = width_r = first_obj.get_width();
+                    //height_t = height_b = first_obj.get_height();
+
+                    lb = first_obj.get_x() - first_obj.get_width()/2;
+                    rb = first_obj.get_x() + first_obj.get_width()/2;
+                    bb = first_obj.get_y() - first_obj.get_height()/2;
+                    tb = first_obj.get_y() + first_obj.get_height()/2;
+                    
+                    for (int i = 0; i < objects_count; i++)
+                    {
+                        GroupBase el = elements[i] = objects[i];
+
+                        if(el.get_x() - el.get_width()/2 < lb) { lb = el.get_x() - el.get_width()/2; }
+                        if(el.get_x() + el.get_width()/2 > rb) { rb = el.get_x() + el.get_width()/2; }
+                        if(el.get_y() - el.get_height()/2 < bb) { bb = el.get_y() - el.get_height()/2; }
+                        if(el.get_y() + el.get_height()/2 > tb) { tb = el.get_y() + el.get_height()/2; }
+
+                    }
+                    x = (lb + rb )/ 2;
+                    y = (tb + bb )/ 2;
+                    width = (rb - lb);
+                    height = (tb - bb);
+                    //for (int i = 0; i < objects_count; i++)
+                    //{
+                    //    GroupBase el = elements[i] = objects[i];
+
+                    //    if (el.get_x() <= minx) { 
+                    //        if (el.get_x() == minx)
+                    //        {
+                    //            if (el.get_width() > width_l) { width_l = el.get_width(); }
+                    //        }
+                    //        else
+                    //        {
+                    //            width_l = el.get_width();
+                    //        }
+                    //        minx = el.get_x();
+                    //    }
+                    //    if (el.get_y() <= miny) { miny = el.get_y();
+                    //        if (el.get_y() == miny)
+                    //        {
+                    //            if (el.get_height() > height_b) { height_b = el.get_height(); }
+                    //        }
+                    //        else
+                    //        {
+                    //            height_b = el.get_height();
+                    //        }
+                    //    }
+                    //    if (el.get_x() >= maxx) { maxx = el.get_x();
+                    //        if (el.get_x() == maxx)
+                    //        {
+                    //            if (el.get_width() > width_r) { width_r = el.get_width(); }
+                    //        }
+                    //        else
+                    //        {
+                    //            width_r = el.get_width(); }
+                    //        }
+
+                    //    if (el.get_y() >= maxy) { maxy = el.get_y();
+                    //        if (el.get_y() == maxy)
+                    //        {
+                    //            if (el.get_height() > height_b) { height_b = el.get_height(); }
+                    //        }
+                    //        else
+                    //        {
+                    //            height_b = el.get_height();
+                    //        }
+                    //       }
+                    //}
+                    //x = (minx + maxx + width_l - width_r) / 2;
+                    //y = (miny + maxy + height_t - height_b )/ 2;
+                    //width = (width_l/2) + (width_r/2) + maxx - minx;
+                    //height = (height_t/2) + (height_b/2) + maxy - miny;
                 }
                 size = objects_count;
                 _select = true;
@@ -126,24 +215,66 @@ namespace laba_7
                 foreach(Group el in elements) { c = c + el.get_count(); }
                 return c;
             }
-            override public void set(int x, int y) {
-                for(int i = 0; i < size; i++)
+            override public bool set(int x, int y) {
+
+
+                int pw = width/2 ;
+                int ph = height/2;
+                if (x > pw && x <= 1080 - pw - 22 && y > ph + 22 && y <= 720 - 40 - ph)
                 {
-                    if(elements[i] != null)
+                    for(int i = 0; i < size; i++)
                     {
-                        elements[i].set(x, y);
+                        elements[i].add(x-this.x, y-this.y);
                     }
+                    this.x = x; this.y = y;
+                    return true;
                 }
+                return false;
+
+
+                //CommandLog history = new CommandLog();
+                //SetCommand cmd = new SetCommand(x, y);
+                //for(int i = 0; i < size; i++)
+                //{
+                //    if(elements[i] != null&&!cmd.execute(elements[i]))
+                //    {
+                //        history.undo_all();
+                //        return false;
+                //    }
+                //    history.add(cmd);
+                //}
+                //return true;
             }
-            override public void add(int x, int y)
+            override public bool add(int x, int y)
             {
-                for (int i = 0; i < size; i++)
-                {
-                    if (elements[i] != null)
-                    {
-                        elements[i].add(x, y);
-                    }
-                }
+                return this.set(this.x+x,this.y+y);
+                
+
+                //CommandLog history = new CommandLog();
+                //MoveCommand cmd = new MoveCommand(x,y);
+                //for (int i = 0; i < size; i++)
+                //{
+                //    if (elements[i] != null && !cmd.execute(elements[i]))
+                //    {
+                //        history.undo_all();
+                //        return false;
+                //    }
+                //    history.add(cmd);
+                //}
+                //return true;
+
+                //for (int i = 0; i < size; i++)
+                //{
+                //    if (elements[i] != null && !elements[i].add(x, y))
+                //    {
+                //        for(int j = 0; j <= i; j++)
+                //        {
+                //            elements[j].add(-x, -y);
+                //        }
+                //        return false;
+                //    }
+                //}
+                //return true;
             }
             override public void set_color(Color color)
             {
@@ -211,35 +342,61 @@ namespace laba_7
                 }
                 return null;
             }
+            public override int get_x() { return x; }
+            public override int get_y() { return y; }
+            public override int get_width() { return width; }
+            public override int get_height() { return height; }
         }
 
         //классы команд
         public abstract class Command
         {
-            public virtual void execute() { }
-            public virtual void unexecute() { }
-            public virtual void execute(GroupBase o) { }
-            public virtual void unexecute(GroupBase o) { }
-            public virtual void execute(List<GroupBase> o) { }
-            public virtual void unexecute(List<GroupBase> o) { }
+            public virtual bool execute() { return false; }
+            public virtual bool unexecute() { return false; }
+            public virtual bool execute(GroupBase o) { return false; }
+            public virtual bool unexecute(GroupBase o) { return false; }
+            public virtual bool execute(List<GroupBase> o) { return false; }
+            public virtual bool unexecute(List<GroupBase> o) { return false; }
             public virtual Command clone() { return null; }
         }
         public class CommandLog
         {
-            List<Command> commands = new List<Command>();
-            public CommandLog() { }
+            List<Command> commands;
+            public CommandLog() { commands = new List<Command>(); }
             public CommandLog(List<Command> commands) { this.commands = commands; }
             public void add(Command command) { commands.Add(command); }
             public void add(List<Command> command) { this.commands = commands.Concat(command).ToList(); }
+            public int count() { return commands.Count; }
+            public void undo() { Command unexecuted_command = commands.Last(); unexecuted_command.unexecute(); commands.Remove(unexecuted_command); }
+            public void undo(int n) {
+
+                Command unexecuted_command;
+                for (int i = 0; i < n; i++)
+                {
+                    if(commands.Count == 0) { break; }
+                    unexecuted_command = commands.Last();
+                    unexecuted_command.unexecute();
+                    commands.Remove(unexecuted_command);
+                }
+            }
+            public void undo_all() {
+                Command unexecuted_command;
+                while (commands.Count > 0)
+                {
+                    unexecuted_command = commands.Last();
+                    unexecuted_command.unexecute();
+                    commands.Remove(unexecuted_command);
+                }
+            }
         }
         public class MoveCommand : Command
         {
             private int dx, dy, speed;
             private GroupBase o;
-            public override void execute(GroupBase o) { this.o = o; o.add(dx * speed, dy * speed); }
-            public override void unexecute(GroupBase o) { this.o = o; o.add(-dx * speed, -dy * speed); }
-            public override void execute() { o.add(dx * speed, dy * speed); }
-            public override void unexecute() { o.add(-dx * speed, -dy * speed); }
+            public override bool execute(GroupBase o) { this.o = o; return o.add(dx * speed, dy * speed); }
+            public override bool unexecute(GroupBase o) { this.o = o; return o.add(-dx * speed, -dy * speed);  }
+            public override bool execute() { return o.add(dx * speed, dy * speed); }
+            public override bool unexecute() { return o.add(-dx * speed, -dy * speed); }
             public MoveCommand(GroupBase o, int dx, int dy) { this.o = o; this.dx = dx; this.dy = dy; this.speed = 1; }
             public MoveCommand(GroupBase o, int dx, int dy, int speed) { this.o = o; this.dx = dx; this.dy = dy; this.speed = speed; }
             public MoveCommand(int dx, int dy) { this.o = null; this.dx = dx; this.dy = dy; this.speed = 1; }
@@ -251,15 +408,63 @@ namespace laba_7
             private int dx, dy, speed;
             List<GroupBase> objects;
             private void set_p(List<GroupBase> objects,int dx,int dy,int speed) { this.objects = objects;this.dx = dx;this.dy = dy;this.speed = speed; }
-            public override void execute() { foreach (var o in objects) { o.add(dx * speed, dy * speed); } }
-            public override void unexecute() { foreach (var o in objects) { o.add(-dx * speed, -dy * speed); } }
-            public override void execute(List<GroupBase> objects) { this.objects = objects; foreach (var o in objects) { o.add(dx * speed, dy * speed); } }
-            public override void unexecute(List<GroupBase> objects) { this.objects = objects; foreach (var o in objects) { o.add(-dx * speed, -dy * speed); } }
+            private bool exe(List<GroupBase> objects,int dx,int dy,int speed)
+            {
+                int n = objects.Count;
+                int i;
+                for (i = 0; i < n; i++)
+                {
+                    if (!objects[i].add(dx * speed, dy * speed))
+                    {
+                        for (int j = 0; j < i; j++)
+                        {
+                            objects[i].add(-dx * speed, -dy * speed);
+                        }
+                        return false;
+                    }
+                }
+                return true;
+            }
+            public override bool execute() {
+                return exe(objects,dx,dy,speed);
+                //int n = objects.Count;
+                //int i;
+                //for (i = 0; i < n; i++) {
+                //    if (!objects[i].add(dx * speed, dy * speed)) {
+                //        for(int j=0; j<i; j++)
+                //        {
+                //            objects[i].add(-dx * speed, -dy * speed);
+                //        }
+                //        return false; }
+                //}
+                //return true;
+
+                //bool eq = true;
+                //foreach (var o in objects) {
+                //    if (!o.add(dx * speed, dy * speed)) { eq = false;}
+                //}
+                //return eq;
+            }
+            public override bool unexecute() { 
+                return exe(objects, -dx,-dy,speed);
+                
+                //foreach (var o in objects) { o.add(-dx * speed, -dy * speed); } return true; 
+            }
+            public override bool execute(List<GroupBase> objects) { 
+                this.objects = objects;
+                return exe(objects,dx,dy,speed);
+                //foreach (var o in objects) { o.add(dx * speed, dy * speed); } return true;
+                }
+            public override bool unexecute(List<GroupBase> objects) {
+                return exe(objects, -dx, -dy, speed);
+                //this.objects = objects; foreach (var o in objects) { o.add(-dx * speed, -dy * speed); } return true;
+                }
             public MoveSelectedCommand(List<GroupBase> objects, int dx, int dy) { set_p(objects, dx, dy, 1); }
             public MoveSelectedCommand(List<GroupBase> objects, int dx, int dy, int speed) { set_p(objects, dx, dy, speed); }
             public MoveSelectedCommand(int dx, int dy) { set_p(new List<GroupBase>(),dx, dy, 1); }
             public MoveSelectedCommand(int dx, int dy, int speed) { set_p(new List<GroupBase>(), dx, dy, speed); }
             public override Command clone() { return new MoveSelectedCommand(objects,dx, dy,speed); }
+        
         }
         public class MoveCommandMap
         {
@@ -291,6 +496,7 @@ namespace laba_7
             }
             public Command move(GroupBase o, KeyEventArgs key) { if (o == null) { return null; } MoveCommand kyda; if (move_map.TryGetValue(key.KeyCode, out kyda)) { kyda.execute(o); return kyda; } return null; }
             public Command move(List<GroupBase> o, KeyEventArgs key) { if (o == null) { return null; } MoveSelectedCommand kyda; if (move_selected_map.TryGetValue(key.KeyCode, out kyda)) { kyda.execute(o); return kyda; } return null; }
+            
             //public List<Command> move(Storage storage, KeyEventArgs key) {
             //    List<Command> commands = new List<Command>();
             //    for (int i = 0; i < storage.size(); i++) {
@@ -303,11 +509,18 @@ namespace laba_7
         }
         //идеи для команд
         public class SelectCommand { }
-        public class AddCommand
+        public class SetCommand: Command
         {
+            private int x1, y1, x2,y2;
+            private GroupBase o;
+            public override bool execute() { o.set(x2, y2);return true; }
+            public override bool unexecute() { o.set(x1, y1); return true; }
+            public override bool execute(GroupBase o) { this.o = o;  o.set(x2, y2); return true; }
+            public override bool unexecute(GroupBase o) { this.o = o; o.set(x1, y1); return true; }
+            public SetCommand(GroupBase o, int x2, int y2) { this.o = o; this.x2 = x2; this.y2 = y2; }
+            public SetCommand(int x2, int y2) { this.o = null; this.x2 = x2; this.y2 = y2; }
 
         }
-
 
         //Объекты
         public class Object : GroupBase
@@ -327,19 +540,18 @@ namespace laba_7
             protected Color _color;
             public bool _selected;
             public System.Windows.Forms.Button obj = new System.Windows.Forms.Button();
-            public override void set(int x, int y)
+            public override bool set(int x, int y)
             {
                 int p = _size / 2;
                 if (x > p && x <= 1080 - p -22 && y > p + 22 && y <= 720 -40 - p)
                 {
                     _x = x; _y = y;
                     obj.Location = new System.Drawing.Point(x - p, y - p);
+                    return true;
                 }
+                return false;
             }
-            public override void add(int x, int y)
-            {
-                this.set(_x + x, _y + y);
-            }
+            public override bool add(int x, int y){return this.set(_x + x, _y + y);}
             public override void set_color(Color color)
             {
                 _color = color;
@@ -407,6 +619,10 @@ namespace laba_7
                 elem.Add(this);
                 return elem;
             }
+            public override int get_x() { return _x; }
+            public override int get_y() { return _y; }
+            public override int get_width() { return _size; }
+            public override int get_height() { return _size; }
         }
         public class Circle : Object
         {
@@ -668,7 +884,6 @@ namespace laba_7
                 {
                     Controls.Remove(obj);
                 }
-                
             }
         }
         public void move_obj(object sender, KeyEventArgs e)
