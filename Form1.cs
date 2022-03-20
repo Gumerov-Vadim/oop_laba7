@@ -407,22 +407,30 @@ namespace laba_7
         {
             private int dx, dy, speed;
             List<GroupBase> objects;
-            private void set_p(List<GroupBase> objects,int dx,int dy,int speed) { this.objects = objects;this.dx = dx;this.dy = dy;this.speed = speed; }
+            List<bool> ismoved;
+            private void set_p(List<GroupBase> objects,int dx,int dy,int speed) { this.objects = objects;this.dx = dx;this.dy = dy;this.speed = speed;ismoved = new List<bool>(); }
             private bool exe(List<GroupBase> objects,int dx,int dy,int speed)
             {
                 int n = objects.Count;
                 int i;
                 for (i = 0; i < n; i++)
                 {
-                    if (!objects[i].add(dx * speed, dy * speed))
-                    {
-                        for (int j = 0; j < i; j++)
-                        {
-                            objects[i].add(-dx * speed, -dy * speed);
-                        }
-                        return false;
-                    }
+                    ismoved.Add(objects[i].add(dx*speed,dy*speed));
+                    
+                    //if (!objects[i].add(dx * speed, dy * speed))
+                    //{
+                    //    for (int j = 0; j < i; j++)
+                    //    {
+                    //        objects[i].add(-dx * speed, -dy * speed);
+                    //    }
+                    //    return false;
+                    //}
                 }
+                i = 0;
+                while(i != ismoved.Count&&!ismoved[i]) {
+                    i++;
+                }
+                if(i == ismoved.Count) { return false; }
                 return true;
             }
             public override bool execute() {
@@ -446,8 +454,11 @@ namespace laba_7
                 //return eq;
             }
             public override bool unexecute() { 
-                return exe(objects, -dx,-dy,speed);
-                
+                for(int i = 0; i < objects.Count; i++)
+                {
+                    if (ismoved[i]) { objects[i].add(-dx*speed, -dy*speed); }
+                }
+                return true;
                 //foreach (var o in objects) { o.add(-dx * speed, -dy * speed); } return true; 
             }
             public override bool execute(List<GroupBase> objects) { 
@@ -456,9 +467,14 @@ namespace laba_7
                 //foreach (var o in objects) { o.add(dx * speed, dy * speed); } return true;
                 }
             public override bool unexecute(List<GroupBase> objects) {
-                return exe(objects, -dx, -dy, speed);
-                //this.objects = objects; foreach (var o in objects) { o.add(-dx * speed, -dy * speed); } return true;
+                for (int i = 0; i < objects.Count; i++)
+                {
+                    if (ismoved[i]) { objects[i].add(-dx * speed, -dy * speed); }
                 }
+                return true;
+                //return exe(objects, -dx, -dy, speed);
+                //this.objects = objects; foreach (var o in objects) { o.add(-dx * speed, -dy * speed); } return true;
+            }
             public MoveSelectedCommand(List<GroupBase> objects, int dx, int dy) { set_p(objects, dx, dy, 1); }
             public MoveSelectedCommand(List<GroupBase> objects, int dx, int dy, int speed) { set_p(objects, dx, dy, speed); }
             public MoveSelectedCommand(int dx, int dy) { set_p(new List<GroupBase>(),dx, dy, 1); }
