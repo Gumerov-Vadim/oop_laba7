@@ -73,6 +73,8 @@ namespace laba_7
             public abstract int get_y();
             public abstract int get_width();
             public abstract int get_height();
+            public virtual void save(StreamWriter zn) { }
+            public virtual GroupBase load(StreamReader stream) { return null; }
         }
         public class Group : GroupBase
         {
@@ -139,56 +141,6 @@ namespace laba_7
                     y = (tb + bb )/ 2;
                     width = (rb - lb);
                     height = (tb - bb);
-                    //for (int i = 0; i < objects_count; i++)
-                    //{
-                    //    GroupBase el = elements[i] = objects[i];
-
-                    //    if (el.get_x() <= minx) { 
-                    //        if (el.get_x() == minx)
-                    //        {
-                    //            if (el.get_width() > width_l) { width_l = el.get_width(); }
-                    //        }
-                    //        else
-                    //        {
-                    //            width_l = el.get_width();
-                    //        }
-                    //        minx = el.get_x();
-                    //    }
-                    //    if (el.get_y() <= miny) { miny = el.get_y();
-                    //        if (el.get_y() == miny)
-                    //        {
-                    //            if (el.get_height() > height_b) { height_b = el.get_height(); }
-                    //        }
-                    //        else
-                    //        {
-                    //            height_b = el.get_height();
-                    //        }
-                    //    }
-                    //    if (el.get_x() >= maxx) { maxx = el.get_x();
-                    //        if (el.get_x() == maxx)
-                    //        {
-                    //            if (el.get_width() > width_r) { width_r = el.get_width(); }
-                    //        }
-                    //        else
-                    //        {
-                    //            width_r = el.get_width(); }
-                    //        }
-
-                    //    if (el.get_y() >= maxy) { maxy = el.get_y();
-                    //        if (el.get_y() == maxy)
-                    //        {
-                    //            if (el.get_height() > height_b) { height_b = el.get_height(); }
-                    //        }
-                    //        else
-                    //        {
-                    //            height_b = el.get_height();
-                    //        }
-                    //       }
-                    //}
-                    //x = (minx + maxx + width_l - width_r) / 2;
-                    //y = (miny + maxy + height_t - height_b )/ 2;
-                    //width = (width_l/2) + (width_r/2) + maxx - minx;
-                    //height = (height_t/2) + (height_b/2) + maxy - miny;
                 }
                 size = objects_count;
                 _select = true;
@@ -201,7 +153,7 @@ namespace laba_7
                 }
                 return eq;
             }
-            public bool add(Group el)
+            public bool add(GroupBase el)
             {
                 for(int i = 0; i < size; i++)
                 {
@@ -230,20 +182,6 @@ namespace laba_7
                     return true;
                 }
                 return false;
-
-
-                //CommandLog history = new CommandLog();
-                //SetCommand cmd = new SetCommand(x, y);
-                //for(int i = 0; i < size; i++)
-                //{
-                //    if(elements[i] != null&&!cmd.execute(elements[i]))
-                //    {
-                //        history.undo_all();
-                //        return false;
-                //    }
-                //    history.add(cmd);
-                //}
-                //return true;
             }
             override public bool add(int x, int y)
             {
@@ -346,6 +284,74 @@ namespace laba_7
             public override int get_y() { return y; }
             public override int get_width() { return width; }
             public override int get_height() { return height; }
+
+            public override void save(StreamWriter stream)
+            {
+                stream.WriteLine("G");
+                stream.WriteLine(size.ToString());
+                for(int i = 0; i < size; i++)
+                {
+                    elements[i].save(stream);
+                }
+            }
+            public override GroupBase load(StreamReader stream)
+            {
+                List<GroupBase> el_in_group = new List<GroupBase>();
+                Factory factory = new Factory();
+                el_in_group = factory.load(stream);
+                return new Group(el_in_group);
+            }
+        }
+
+        public class Factory
+        {
+            private string path;
+            public GroupBase create_obj(Char code)
+            {
+                switch (code)
+                {
+                    case 'C':
+                        return new Circle();
+                    case 'S':
+                        return new Square();
+                    case 'T':
+                        return new Triangle();
+                    case 'G':
+                        return new Group();
+                }
+                return null;
+            }
+            public List<GroupBase> load(StreamReader stream)
+            {
+                string line = stream.ReadLine();
+                int count;
+                if (line != null)
+                {
+                    count = int.Parse(line);
+                }
+                else { count = 0; }
+                List<GroupBase> loading_objects = new List<GroupBase>();
+                GroupBase obj=null;
+                for(int i = 0; i < count; i++)
+                {
+                    obj = create_obj(stream.ReadLine().ToCharArray()[0]);
+                    loading_objects.Add(obj.load(stream));
+                }
+                return loading_objects;
+            }
+            public List<GroupBase> load(string path)
+            {
+                StreamReader stream = new StreamReader(path);
+                List<GroupBase> loading_objs = load(stream);
+                stream.Close();
+                return loading_objs;
+            }
+            public List<GroupBase> load()
+            {
+                return load(path);
+            }
+            public Factory(string path) { this.path = path; }
+            public Factory() { this.path = ""; }
         }
 
         //классы команд
@@ -425,13 +431,12 @@ namespace laba_7
                     //    }
                     //    return false;
                     //}
+                }                
+                for(i = 0; i < ismoved.Count; i++)
+                {
+                    if (ismoved[i]) { return true; }
                 }
-                i = 0;
-                while(i != ismoved.Count&&!ismoved[i]) {
-                    i++;
-                }
-                if(i == ismoved.Count) { return false; }
-                return true;
+                return false;
             }
             public override bool execute() {
                 return exe(objects,dx,dy,speed);
@@ -655,6 +660,20 @@ namespace laba_7
             public Circle(int x, int y) : base(x, y) { set_p(); }
             public Circle(int x, int y, int radius) : base(x, y, radius * 2) { set_p(); }
             public Circle(int x, int y, int radius, Color color) : base(x, y, radius * 2, color) { set_p(); }
+            public Circle(int[] p,Color color):base(p[0], p[1],p[2],color) { set_p(); }
+            public override void save(StreamWriter stream) {
+                stream.WriteLine("C");
+                stream.WriteLine(_color.ToArgb().ToString());
+                stream.WriteLine(_x.ToString() +" "+ _y.ToString() + " " + _size.ToString());
+                
+            }
+            public override GroupBase load(StreamReader stream) {
+                Color color = Color.FromArgb(int.Parse(stream.ReadLine()));
+                //Color color = Color.FromName(stream.ReadLine());
+                string line = stream.ReadLine();
+                int[] p = line.Split(' ').Select(n=>int.Parse(n)).ToArray();
+                return new Circle(p,color);
+            }
         }
         public class Square : Object
         {
@@ -662,6 +681,20 @@ namespace laba_7
             public Square(int x, int y) : base(x, y) { }
             public Square(int x, int y, int size) : base(x, y, size) { }
             public Square(int x, int y, int size, Color color) : base(x, y, size, color) { }
+            public Square(int[] p, Color color) : base(p[0], p[1], p[2], color) { }
+            public override void save(StreamWriter stream)
+            {
+                stream.WriteLine("S");
+                stream.WriteLine(_color.ToArgb().ToString());
+                stream.WriteLine(_x.ToString() + " " + _y.ToString() + " " + _size.ToString());
+            }
+            public override GroupBase load(StreamReader stream)
+            {
+                Color color = Color.FromArgb(int.Parse(stream.ReadLine()));
+                string line = stream.ReadLine();
+                int[] p = line.Split(' ').Select(n => int.Parse(n)).ToArray();
+                return new Square(p, color);
+            }
         }
         public class Triangle : Object
         {
@@ -680,6 +713,20 @@ namespace laba_7
             public Triangle(int x, int y) : base(x, y) { set_p(); }
             public Triangle(int x, int y, int size) : base(x, y, size) { set_p(); }
             public Triangle(int x, int y, int size, Color color) : base(x, y, size, color) { set_p(); }
+            public Triangle(int[] p, Color color) : base(p[0], p[1], p[2], color) { set_p(); }
+            public override void save(StreamWriter stream)
+            {
+                stream.WriteLine("T");
+                stream.WriteLine(_color.ToArgb().ToString());
+                stream.WriteLine(_x.ToString() + " " + _y.ToString() + " " + _size.ToString());
+            }
+            public override GroupBase load(StreamReader stream)
+            {
+                Color color = Color.FromArgb(int.Parse(stream.ReadLine()));
+                string line = stream.ReadLine();
+                int[] p = line.Split(' ').Select(n => int.Parse(n)).ToArray();
+                return new Triangle(p, color);
+            }
         }
         public class Storage
         {
@@ -731,6 +778,15 @@ namespace laba_7
                 {
                     if (obj.select()) { obj.add(x, y); }
                 }
+            }
+            public List<Control> get_controls()
+            {
+                List<Control> controls = new List<Control>();
+                foreach (GroupBase obj in massive)
+                {
+                    controls = controls.Concat(obj.get_controls()).ToList();
+                }
+                return controls;
             }
             public List<Control> del_selected()
             {
@@ -810,12 +866,28 @@ namespace laba_7
                 //massive.Add(group);
                 //return group;
             }
-                public Storage()
+            public void save_all(string path)
+            {
+            StreamWriter zn = new StreamWriter(path,false);  //Класс для записи в файл
+            //zn = file.AppendText(); //Дописываем инфу в файл, если файла не существует он создастся
+            zn.WriteLine(massive.Count.ToString()); //Записываем в файл текст из текстового поля
+                for(int i = 0; i < massive.Count; i++)
+                {
+                    massive[i].save(zn);
+                }
+            zn.Close(); // Закрываем файл
+            }
+            public Storage()
             {
                 massive = new List<GroupBase>();
             }
+            public Storage(string path)
+            {
+                    Factory factory = new Factory();
+                    massive = factory.load(path);
+            }
         }
-        Storage storage = new Storage();
+        Storage storage = new Storage("save.txt");
         Group grouplist = new Group();
         Settings obj_settings = new Settings();
         MoveCommandMap movemap = new MoveCommandMap(4);
@@ -869,6 +941,7 @@ namespace laba_7
                     obj.inside().KeyDown += del_selected_obj;
                     obj.inside().KeyDown += move_obj;
                     obj.inside().KeyDown += create_group;
+                    obj.inside().KeyDown += save_objects;
                     this.Controls.Add(obj.inside());
                     //                label1.Text = i.ToString();
                     storage.select_clear();
@@ -909,6 +982,14 @@ namespace laba_7
             movemap.move(o, e);
 
         }
+        public void save_objects(object sender, KeyEventArgs e)
+        {
+            if (Control.ModifierKeys == Keys.Control&& e.KeyCode == Keys.S)
+            {
+                storage.save_all("save.txt");
+            }
+
+        }
         private void create_group(object sender,KeyEventArgs e)
         {
             //if (storage.group_count!=0)
@@ -935,19 +1016,18 @@ namespace laba_7
         }
         private void paint(object sender, EventArgs e)
         {
-            int size = storage.size();
-            int k = 0;
-            GroupBase circle = null;
             Controls.Clear();
             InitializeComponent();
-            while (k < size)
+
+            List<Control> controls = storage.get_controls();
+            foreach(Control obj in controls)
             {
-                circle = storage.get(k);
-                if (circle != null)
-                {
-                    Controls.Add(circle.inside());
-                }
-                k++;
+                Controls.Add(obj);
+                obj.MouseClick += select_obj;
+                obj.KeyDown += del_selected_obj;
+                obj.KeyDown += move_obj;
+                obj.KeyDown += create_group;
+                obj.KeyDown += save_objects;
             }
         }
         private void updatefromsettings(object sender, EventArgs e)
