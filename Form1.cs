@@ -548,6 +548,7 @@ namespace laba_7
         {
             private void set_p(int x, int y, int size, Color color)
             {
+                obj = new System.Windows.Forms.Button();
                 _x = x; _y = y; _size = size;
                 _color = color;
                 obj.FlatStyle = FlatStyle.Flat;
@@ -560,7 +561,7 @@ namespace laba_7
             protected int _x, _y, _size;
             protected Color _color;
             public bool _selected;
-            public System.Windows.Forms.Button obj = new System.Windows.Forms.Button();
+            public System.Windows.Forms.Button obj;
             public override bool set(int x, int y)
             {
                 int p = _size / 2;
@@ -896,21 +897,21 @@ namespace laba_7
             InitializeComponent();
             obj_settings.observers += new EventHandler(this.updatefromsettings);
         }
-        private void Form1_Load(object sender, EventArgs e)
-        {
-            int size = storage.size();
-            int k = 0;
-            while (k < size)
-            {
-                if (storage.get(k) != null)
-                {
-                    System.Windows.Forms.Button circle = storage.get(k).inside();
-                    circle.MouseClick += select_obj;
-                    circle.KeyDown += del_selected_obj;
-                }
-                k++;
-            }
-        }
+        //private void Form1_Load(object sender, EventArgs e)
+        //{
+        //    int size = storage.size();
+        //    int k = 0;
+        //    while (k < size)
+        //    {
+        //        if (storage.get(k) != null)
+        //        {
+        //            System.Windows.Forms.Button circle = storage.get(k).inside();
+        //            circle.MouseClick += select_obj;
+        //            circle.KeyDown += del_selected_obj;
+        //        }
+        //        k++;
+        //    }
+        //}
         private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
              int p = obj_settings.resize();
@@ -937,15 +938,26 @@ namespace laba_7
 
                 if (obj != null)
                 {
-                    obj.inside().MouseClick += select_obj;
-                    obj.inside().KeyDown += del_selected_obj;
-                    obj.inside().KeyDown += move_obj;
-                    obj.inside().KeyDown += create_group;
-                    obj.inside().KeyDown += save_objects;
-                    this.Controls.Add(obj.inside());
+                    Control obj_control = obj.inside();
+                    obj_control.MouseClick += select_obj;
+                    obj_control.KeyDown += del_selected_obj;
+                    obj_control.KeyDown += move_obj;
+                    obj_control.KeyDown += create_group;
+                    obj_control.KeyDown += save_objects;
+                    this.Controls.Add(obj_control);
                     //                label1.Text = i.ToString();
                     storage.select_clear();
                     obj.select(true);
+                }
+                List<Control> controls = storage.get_controls();
+                foreach (Control o in controls)
+                {
+                    Controls.Add(o);
+                    o.MouseClick += select_obj;
+                    o.KeyDown += del_selected_obj;
+                    o.KeyDown += move_obj;
+                    o.KeyDown += create_group;
+                    o.KeyDown += save_objects;
                 }
             }
         }
@@ -1016,8 +1028,8 @@ namespace laba_7
         }
         private void paint(object sender, EventArgs e)
         {
-            Controls.Clear();
-            InitializeComponent();
+            //Controls.Clear();
+            //InitializeComponent();
 
             List<Control> controls = storage.get_controls();
             foreach(Control obj in controls)
